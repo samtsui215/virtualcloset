@@ -57,7 +57,9 @@ class SupabaseDriver implements StorageDriver {
         "Content-Type": contentType,
         "x-upsert": "true", // same bytes → same key → harmless overwrite
       },
-      body: buffer,
+      // fetch's BodyInit type doesn't accept a Node Buffer directly; a plain
+      // Uint8Array view is a valid body and avoids a copy of the bytes.
+      body: new Uint8Array(buffer),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
