@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ColorField } from "@/components/ColorField";
+import { ImageColorPicker } from "@/components/ImageColorPicker";
 
 const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"];
 const SEASON = ["SUMMER", "FALL", "WINTER", "SPRING", "ALL"];
@@ -11,6 +13,7 @@ export interface EditableItem {
   category: string;
   imageUrl: string;
   primaryColor: string;
+  colorFamily: string;
   seasons: string[];
   styles: string[];
   tags: string[];
@@ -31,6 +34,8 @@ export function ItemEditModal({
 }) {
   const [name, setName] = useState(item.name);
   const [category, setCategory] = useState(item.category);
+  const [color, setColor] = useState(item.primaryColor);
+  const [family, setFamily] = useState(item.colorFamily);
   const [seasons, setSeasons] = useState<string[]>(item.seasons);
   const [styles, setStyles] = useState<string[]>(item.styles);
   const [tags, setTags] = useState(item.tags.join(", "));
@@ -59,6 +64,8 @@ export function ItemEditModal({
         body: JSON.stringify({
           name,
           category,
+          primaryColor: color,
+          colorFamily: family,
           seasons,
           styles,
           tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -121,6 +128,20 @@ export function ItemEditModal({
               ))}
             </div>
           </div>
+
+          <div>
+            <label className="label">Color — pick from the image</label>
+            <ImageColorPicker
+              src={item.imageUrl}
+              onPick={(c, f) => { setColor(c); setFamily(f); }}
+            />
+          </div>
+
+          <ColorField
+            color={color}
+            family={family}
+            onChange={(c, f) => { setColor(c); setFamily(f); }}
+          />
 
           <div>
             <label className="label">Seasons</label>

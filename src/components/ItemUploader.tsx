@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
+import { ColorField } from "@/components/ColorField";
+import { ImageColorPicker } from "@/components/ImageColorPicker";
 
 const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"];
 const SEASON = ["SUMMER", "FALL", "WINTER", "SPRING", "ALL"];
@@ -23,6 +25,10 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
   const [uploaded, setUploaded] = useState<UploadedMeta | null>(null);
   const [name, setName] = useState("");
   const [category, setCategory] = useState("TOP");
+  // Color starts from the auto-detected values; the user can override either the
+  // exact hex or the matching family before saving.
+  const [color, setColor] = useState("#000000");
+  const [family, setFamily] = useState("neutral");
   const [seasons, setSeasons] = useState<string[]>(["ALL"]);
   const [styles, setStyles] = useState<string[]>(["CASUAL"]);
   const [tags, setTags] = useState("");
@@ -40,7 +46,11 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
       fd.append("file", f);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       if (!res.ok) throw new Error((await res.json()).error ?? "Upload failed");
-      setUploaded(await res.json());
+      const meta: UploadedMeta = await res.json();
+      setUploaded(meta);
+      // Seed the editable color from detection; user can adjust before saving.
+      setColor(meta.primaryColor);
+      setFamily(meta.colorFamily);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -64,8 +74,8 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
         body: JSON.stringify({
           name,
           category,
-          primaryColor: uploaded.primaryColor,
-          colorFamily: uploaded.colorFamily,
+          primaryColor: color,
+          colorFamily: family,
           seasons,
           styles,
           tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
@@ -88,6 +98,7 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
 
   const reset = () => {
     setFile(null); setUploaded(null); setName(""); setCategory("TOP");
+    setColor("#000000"); setFamily("neutral");
     setSeasons(["ALL"]); setStyles(["CASUAL"]); setTags(""); setNotes("");
   };
 
@@ -138,18 +149,12 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
   return (
     <div className="card overflow-hidden">
       <div className="grid gap-0 md:grid-cols-[280px_1fr]">
-        {/* Preview pane */}
-        <div className="relative aspect-square w-full bg-surface-sunken md:aspect-auto">
-          <img src={uploaded.url} alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 rounded-full bg-surface/95 px-3 py-1.5 text-xs shadow-soft backdrop-blur">
-            <span
-              className="h-3.5 w-3.5 shrink-0 rounded-full border border-line"
-              style={{ background: uploaded.primaryColor }}
-            />
-            <span className="text-ink-muted">Detected:</span>
-            <strong className="capitalize">{uploaded.colorFamily}</strong>
-            <span className="ml-auto font-mono text-ink-subtle">{uploaded.primaryColor}</span>
-          </div>
+        {/* Preview pane — image doubles as an eyedropper */}
+        <div className="bg-surface-sunken p-3">
+          <ImageColorPicker
+            src={uploaded.url}
+            onPick={(c, f) => { setColor(c); setFamily(f); }}
+          />
         </div>
 
         {/* Form pane */}
@@ -176,6 +181,12 @@ export function ItemUploader({ onCreated }: { onCreated?: () => void }) {
               ))}
             </div>
           </div>
+
+          <ColorField
+            color={color}
+            family={family}
+            onChange={(c, f) => { setColor(c); setFamily(f); }}
+          />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

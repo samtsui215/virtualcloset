@@ -14,6 +14,7 @@ interface Item {
   imageUrl: string;
   imageBlurDataUrl?: string;
   primaryColor: string;
+  colorFamily: string;
   seasons: string[];
   styles: string[];
   tags: string[];

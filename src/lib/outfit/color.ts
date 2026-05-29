@@ -106,3 +106,16 @@ export function rgbToFamily(r: number, g: number, b: number): { family: ColorFam
 
   return { family, hex };
 }
+
+/**
+ * Classify a hex string (e.g. "#1a2233") into a color family. Thin wrapper over
+ * rgbToFamily — used client-side when the user picks a color, to keep the
+ * matching family in sync with the swatch they chose. Pure (no node deps), so
+ * it's safe to import in the browser.
+ */
+export function hexToFamily(hex: string): ColorFamily {
+  const parts = hex.replace("#", "").match(/.{2}/g);
+  if (!parts || parts.length < 3) return "neutral";
+  const [r, g, b] = parts.map((h) => parseInt(h, 16));
+  return rgbToFamily(r, g, b).family;
+}
