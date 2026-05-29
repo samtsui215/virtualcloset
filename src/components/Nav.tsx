@@ -5,6 +5,7 @@ import { useAuth } from "@/components/Providers";
 
 const LINKS = [
   { href: "/closet", label: "Closet" },
+  { href: "/outfits", label: "Outfits" },
   { href: "/outfits/new", label: "Build" },
   { href: "/outfits/generate", label: "Generate" },
 ];
@@ -25,7 +26,7 @@ export function Nav() {
 
         <nav className="hidden items-center gap-1 sm:flex">
           {LINKS.map((l) => {
-            const active = pathname?.startsWith(l.href);
+            const active = pathname === l.href;
             return (
               <Link
                 key={l.href}

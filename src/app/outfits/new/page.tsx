@@ -21,6 +21,7 @@ export default function NewOutfitPage() {
   const [filters, setFilters] = useState<Filters>({ q: "", category: "", season: "", style: "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [season, setSeason] = useState(""); // optional — lets the outfit show up in the seasonal gallery
   const builder = useBuilder();
 
   useEffect(() => {
@@ -41,10 +42,10 @@ export default function NewOutfitPage() {
     const res = await fetch("/api/outfits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: builder.name, itemIds: builder.itemIds }),
+      body: JSON.stringify({ name: builder.name, itemIds: builder.itemIds, season: season || undefined }),
     });
     setSaving(false);
-    if (res.ok) { setMsg("Saved."); builder.clear(); }
+    if (res.ok) { setMsg("Saved."); builder.clear(); setSeason(""); }
     else setMsg("Save failed.");
   };
 
@@ -90,6 +91,18 @@ export default function NewOutfitPage() {
               placeholder="Name this outfit"
               className="input min-w-[160px] flex-1"
             />
+            <select
+              value={season}
+              onChange={(e) => setSeason(e.target.value)}
+              className="input w-auto"
+              title="Season (optional)"
+            >
+              <option value="">Any season</option>
+              <option value="SUMMER">Summer</option>
+              <option value="FALL">Fall</option>
+              <option value="WINTER">Winter</option>
+              <option value="SPRING">Spring</option>
+            </select>
             <div className="flex items-center gap-1 text-xs font-medium uppercase tracking-wider text-ink-muted">
               {builder.itemIds.length} {builder.itemIds.length === 1 ? "item" : "items"}
             </div>
