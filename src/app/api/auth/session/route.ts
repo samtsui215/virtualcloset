@@ -48,10 +48,17 @@ export async function POST(req: Request) {
     expiresIn: EXPIRES_IN_MS,
   });
 
+  // Mark the cookie Secure only on real HTTPS connections. Tying this to
+  // NODE_ENV breaks `npm start` over http://localhost (browsers silently drop
+  // Secure cookies on plain HTTP, leaving the user unauthenticated server-side).
+  // Vercel terminates TLS and forwards x-forwarded-proto=https, so prod stays Secure.
+  const proto = req.headers.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
+  const secure = proto === "https";
+
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, sessionCookie, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     sameSite: "lax",
     path: "/",
     maxAge: EXPIRES_IN_MS / 1000,

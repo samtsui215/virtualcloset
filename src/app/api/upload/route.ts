@@ -29,24 +29,32 @@ export async function POST(req: Request) {
 
   const input = Buffer.from(await file.arrayBuffer());
 
-  // 1. Optimize + extract metadata (resize, blur placeholder, dominant color).
-  const processed = await processImage(input);
+  try {
+    // 1. Optimize + extract metadata (resize, blur placeholder, dominant color).
+    const processed = await processImage(input);
 
-  // 2. Persist to the configured storage driver (local in dev, Cloudinary in prod).
-  const stored = await storage().put(processed.buffer, processed.contentType, file.name);
+    // 2. Persist to the configured storage driver (local in dev, Supabase in prod).
+    const stored = await storage().put(processed.buffer, processed.contentType, file.name);
 
-  // 3. Return the bits the client needs to render & to create the item record.
-  //    We DON'T create the ClothingItem here — that happens in POST /api/items
-  //    once the user fills in name/category/etc. Two-step keeps the upload
-  //    endpoint orthogonal to item validation and lets us pre-fill the form
-  //    with the detected color family while the user edits the rest.
-  return NextResponse.json({
-    url: stored.url,
-    key: stored.key,
-    width: processed.width,
-    height: processed.height,
-    blurDataUrl: processed.blurDataUrl,
-    primaryColor: processed.primaryColor,
-    colorFamily: processed.colorFamily,
-  });
+    // 3. Return the bits the client needs to render & to create the item record.
+    //    We DON'T create the ClothingItem here — that happens in POST /api/items
+    //    once the user fills in name/category/etc. Two-step keeps the upload
+    //    endpoint orthogonal to item validation and lets us pre-fill the form
+    //    with the detected color family while the user edits the rest.
+    return NextResponse.json({
+      url: stored.url,
+      key: stored.key,
+      width: processed.width,
+      height: processed.height,
+      blurDataUrl: processed.blurDataUrl,
+      primaryColor: processed.primaryColor,
+      colorFamily: processed.colorFamily,
+    });
+  } catch (err) {
+    // Surface the real reason (read-only FS, missing Supabase key, unsupported
+    // format) instead of a bare 500 — shows up in Vercel logs and the client.
+    const message = err instanceof Error ? err.message : "Image processing failed";
+    console.error("[upload] failed:", message);
+    return NextResponse.json({ error: `Upload failed: ${message}` }, { status: 500 });
+  }
 }
