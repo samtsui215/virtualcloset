@@ -4,6 +4,7 @@ import { useAuth } from "@/components/Providers";
 import Link from "next/link";
 import { ItemCard } from "@/components/ItemCard";
 import { ItemUploader } from "@/components/ItemUploader";
+import { ItemEditModal } from "@/components/ItemEditModal";
 import { FilterBar, type Filters } from "@/components/FilterBar";
 
 interface Item {
@@ -13,6 +14,10 @@ interface Item {
   imageUrl: string;
   imageBlurDataUrl?: string;
   primaryColor: string;
+  seasons: string[];
+  styles: string[];
+  tags: string[];
+  notes?: string | null;
 }
 
 export default function ClosetPage() {
@@ -21,6 +26,7 @@ export default function ClosetPage() {
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<Filters>({ q: "", category: "", season: "", style: "" });
   const [showUploader, setShowUploader] = useState(false);
+  const [editing, setEditing] = useState<Item | null>(null);
 
   const load = useCallback(async (f: Filters) => {
     setLoading(true);
@@ -94,9 +100,18 @@ export default function ClosetPage() {
               category={it.category}
               primaryColor={it.primaryColor}
               blurDataUrl={it.imageBlurDataUrl}
+              onClick={() => setEditing(it)}
             />
           ))}
         </div>
+      )}
+
+      {editing && (
+        <ItemEditModal
+          item={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => { setEditing(null); load(filters); }}
+        />
       )}
     </div>
   );

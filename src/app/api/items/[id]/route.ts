@@ -6,6 +6,7 @@ import { requireUserId } from "@/lib/session";
 const UpdateBody = z
   .object({
     name: z.string().min(1).max(120),
+    category: z.enum(["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"]),
     primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
     colorFamily: z.string().min(1),
     seasons: z.array(z.string()),
