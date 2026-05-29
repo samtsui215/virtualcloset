@@ -1,0 +1,180 @@
+// Prisma schema for Virtual Closet.
+// Why Postgres: relational shape (users -> items -> outfits, plus item_pairings as
+// a learned-weights table) is a natural fit, and we want array/enum columns + GIN
+// indexes for tag/array search.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Supabase + serverless: the runtime connects through the pgBouncer pooler
+  // (port 6543, ?pgbouncer=true) so we don't exhaust connections on Vercel.
+  url       = env("DATABASE_URL")
+  // Migrations need a direct, unpooled connection (port 5432) because pgBouncer
+  // in transaction mode can't run the DDL/advisory locks Prisma Migrate uses.
+  directUrl = env("DIRECT_URL")
+}
+
+// ---- Enums -------------------------------------------------------------------
+
+enum Category {
+  TOP
+  BOTTOM
+  SHOES
+  OUTERWEAR
+  ACCESSORY
+}
+
+enum Season {
+  SUMMER
+  FALL
+  WINTER
+  SPRING
+  ALL // year-round items; matches every requested season
+}
+
+enum Style {
+  CASUAL
+  FORMAL
+  ATHLETIC
+  BUSINESS
+  STREETWEAR
+}
+
+// ---- Models ------------------------------------------------------------------
+
+// Identity is owned by Firebase Auth. We mirror just enough here to hang
+// relations off of: the PK *is* the Firebase UID, so there's no separate
+// firebaseUid column to join on. The row is upserted on first authenticated
+// request (see /api/auth/session). No password — Firebase holds credentials.
+model User {
+  id        String   @id // Firebase UID
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+
+  items     ClothingItem[]
+  outfits   Outfit[]
+  wears     OutfitWear[]
+  pairings  ItemPairing[]
+  feedback  OutfitFeedback[]
+}
+
+model ClothingItem {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name         String
+  category     Category
+  // We store both an exact-ish hex *and* a coarse semantic family. The family is
+  // what the scoring engine uses (cheap lookups, robust to slight color drift);
+  // the hex is what the UI renders as a swatch.
+  primaryColor String
+  colorFamily  String
+
+  seasons      Season[]
+  styles       Style[]
+  tags         String[]
+  notes        String?
+
+  // We persist the optimized image URL + a tiny blur-placeholder (base64) so the
+  // closet grid can show LQIP before the real image loads.
+  imageUrl         String
+  imageBlurDataUrl String?
+  imageWidth       Int?
+  imageHeight      Int?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  outfitItems  OutfitItem[]
+
+  // The two most common access patterns: "show me this user's tops" and "show
+  // me the user's most recent items." Both benefit from these compound indexes.
+  @@index([userId, category])
+  @@index([userId, createdAt])
+}
+
+model Outfit {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name       String
+  tags       String[]
+  occasion   String?
+  season     Season?
+  favorite   Boolean  @default(false)
+  // When the auto-generator persists a suggestion, we flag it so we can
+  // distinguish manual creations from system suggestions in analytics.
+  generated  Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  items      OutfitItem[]
+  wears      OutfitWear[]
+  feedback   OutfitFeedback[]
+
+  @@index([userId, createdAt])
+}
+
+model OutfitItem {
+  outfitId String
+  itemId   String
+  outfit   Outfit       @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  item     ClothingItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@id([outfitId, itemId])
+  @@index([itemId])
+}
+
+// Each time a user marks an outfit as "worn today" we append a row.
+// We could increment a counter, but keeping rows lets us reason about
+// recency (e.g. "items not worn in 60 days") later.
+model OutfitWear {
+  id       String   @id @default(cuid())
+  outfitId String
+  outfit   Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wornAt   DateTime @default(now())
+
+  @@index([userId, wornAt])
+  @@index([outfitId])
+}
+
+// Learned weights: how often a given pair of items has appeared together in
+// either a saved outfit or a worn outfit. The generator reads this as its
+// "history" signal. We canonicalize order (itemAId < itemBId) so the lookup
+// table is half the size.
+model ItemPairing {
+  userId    String
+  itemAId   String
+  itemBId   String
+  count     Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, itemAId, itemBId])
+  @@index([userId])
+}
+
+// Like/dislike on an auto-generated outfit. Becomes future training data once
+// we wire up an embedding-based reranker.
+model OutfitFeedback {
+  id        String   @id @default(cuid())
+  outfitId  String
+  outfit    Outfit   @relation(fields: [outfitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signal    Int      // +1 = like, -1 = dislike
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([outfitId])
+}

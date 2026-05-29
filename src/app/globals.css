@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body { background: #faf8f5; color: #171513; }
+  ::selection { background: #171513; color: #faf8f5; }
+}
+
+@layer components {
+  /* Buttons ------------------------------------------------------------ */
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-full
+           px-5 py-2.5 text-sm font-medium transition disabled:cursor-not-allowed
+           disabled:opacity-50;
+  }
+  .btn-primary { @apply btn bg-ink text-surface hover:bg-ink/90 active:scale-[0.98]; }
+  .btn-secondary {
+    @apply btn border border-line bg-surface-raised text-ink hover:bg-surface-sunken;
+  }
+  .btn-ghost { @apply btn text-ink/70 hover:bg-surface-sunken hover:text-ink; }
+
+  /* Inputs ------------------------------------------------------------- */
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface-raised px-3.5 py-2.5
+           text-sm text-ink placeholder:text-ink-subtle focus:border-ink/30
+           focus:outline-none focus:ring-4 focus:ring-ink/5;
+  }
+  .label { @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-muted; }
+
+  /* Cards -------------------------------------------------------------- */
+  .card { @apply rounded-2xl border border-line bg-surface-raised shadow-soft; }
+
+  /* Chips -------------------------------------------------------------- */
+  .chip {
+    @apply inline-flex cursor-pointer items-center gap-1.5 rounded-full border
+           border-line bg-surface-raised px-3 py-1 text-xs font-medium text-ink
+           transition hover:bg-surface-sunken;
+  }
+  .chip-active { @apply border-ink bg-ink text-surface hover:bg-ink; }
+}
