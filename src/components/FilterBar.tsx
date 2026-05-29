@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-const CATEGORIES = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"];
+const CATEGORIES = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY", "SLEEPWEAR"];
 const SEASONS = ["SUMMER", "FALL", "WINTER", "SPRING"];
 const STYLES = ["CASUAL", "FORMAL", "ATHLETIC", "BUSINESS", "STREETWEAR"];
 

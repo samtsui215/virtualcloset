@@ -67,6 +67,7 @@ export async function generateOutfits(input: GenerateInput): Promise<GeneratedOu
     SHOES: [],
     OUTERWEAR: [],
     ACCESSORY: [],
+    SLEEPWEAR: [],
   };
   for (const it of items) byCategory[it.category].push(it);
 

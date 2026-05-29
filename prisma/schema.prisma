@@ -25,6 +25,7 @@ enum Category {
   SHOES
   OUTERWEAR
   ACCESSORY
+  SLEEPWEAR
 }
 
 enum Season {

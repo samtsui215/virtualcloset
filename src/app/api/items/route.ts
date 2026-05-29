@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUserId } from "@/lib/session";
 
-const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"] as const;
+const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY", "SLEEPWEAR"] as const;
 const SEASON = ["SUMMER", "FALL", "WINTER", "SPRING", "ALL"] as const;
 const STYLE = ["CASUAL", "FORMAL", "ATHLETIC", "BUSINESS", "STREETWEAR"] as const;
 

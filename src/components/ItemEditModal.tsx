@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ColorField } from "@/components/ColorField";
 import { ImageColorPicker } from "@/components/ImageColorPicker";
 
-const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY"];
+const CATEGORY = ["TOP", "BOTTOM", "SHOES", "OUTERWEAR", "ACCESSORY", "SLEEPWEAR"];
 const SEASON = ["SUMMER", "FALL", "WINTER", "SPRING", "ALL"];
 const STYLE = ["CASUAL", "FORMAL", "ATHLETIC", "BUSINESS", "STREETWEAR"];
 
